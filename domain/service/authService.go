@@ -11,11 +11,11 @@ import (
 )
 
 type UserService struct {
-    userRepo model.UserRepository
+	userRepo model.UserRepository
 }
 
 func NewUserService(userRepo model.UserRepository) *UserService {
-    return &UserService{userRepo: userRepo}
+	return &UserService{userRepo: userRepo}
 }
 
 type AuthService interface {
@@ -55,10 +55,11 @@ func (s *authService) Login(email, password string) (string, *model.Users, error
 
 	// create token with custom claim role
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub":  user.ID,
-		"role": user.Role,
-		"exp":  claims.ExpiresAt.Unix(),
-		"iat":  claims.IssuedAt.Unix(),
+		"sub":      user.ID,
+		"role":     user.Role,
+		"username": user.Username,
+		"exp":      claims.ExpiresAt.Unix(),
+		"iat":      claims.IssuedAt.Unix(),
 	})
 
 	tokenString, err := token.SignedString([]byte(s.secret))

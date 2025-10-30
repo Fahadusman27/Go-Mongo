@@ -14,3 +14,8 @@ type PekerjaanAlumni struct {
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
 }
+
+type Trash struct {
+	PekerjaanAlumni
+	IsDeleted   time.Time `json:"is_deleted"`
+}

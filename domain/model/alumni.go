@@ -3,6 +3,7 @@ package model
 import "time"
 
 type Alumni struct {
+	UserID     *int      `json:user_id`
 	NIM        string    `json:"nim"`
 	Nama       string    `json:"nama"`
 	Angkatan   *int      `json:"angkatan"`
