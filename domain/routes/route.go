@@ -1,13 +1,13 @@
 package routes
 
 import (
-	"database/sql"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func NewApp(db *sql.DB) *fiber.App {
+func NewApp(client *mongo.Client) *fiber.App {
     app := fiber.New()
     
     app.Use(logger.New())

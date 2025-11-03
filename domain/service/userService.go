@@ -13,16 +13,15 @@ import (
 func GetUsersService(c *fiber.Ctx) error {
 	page, _ := strconv.Atoi(c.Query("page", "1"))
 	limit, _ := strconv.Atoi(c.Query("limit", "10"))
-	sortBy := c.Query("sortBy", "id")
+	sortBy := c.Query("sortBy", "_id")
 	order := c.Query("order", "asc")
 	search := c.Query("search", "")
 
 	offset := (page - 1) * limit
 
-	// whitelist kolom
-	sortByWhitelist := map[string]bool{"id": true, "username": true, "email": true, "created_at": true}
+	sortByWhitelist := map[string]bool{"_id": true, "username": true, "email": true, "created_at": true}
 	if !sortByWhitelist[sortBy] {
-		sortBy = "id"
+		sortBy = "_id"
 	}
 	if strings.ToLower(order) != "desc" {
 		order = "asc"
@@ -36,7 +35,7 @@ func GetUsersService(c *fiber.Ctx) error {
 
 	total, err := repository.CountUsersRepo(search)
 	if err != nil {
-		fmt.Println("CountUsersRepo error:", err) // 👈 penting
+		fmt.Println("CountUsersRepo error:", err)
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to count users"})
 	}
 

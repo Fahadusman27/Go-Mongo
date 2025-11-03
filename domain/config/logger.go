@@ -1,30 +1,35 @@
 package config
 
 import (
-	"database/sql"
+	"context"
+	"fmt"
 	"log"
-
-	_ "github.com/lib/pq"
-
-    "fmt"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
+	
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func InitDB() *sql.DB {
-    connStr := "host=localhost port=5432 user=fahad password=Fahad2004 dbname=fahad sslmode=disable"
-	var err error
-    db, err := sql.Open("postgres", connStr)
-    if err != nil {
-        log.Fatal("Gagal koneksi ke database:", err)
-    }
+func InitDB() *mongo.Client {
+	connURI := "mongodb://localhost:27017/"
+	
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-    err = db.Ping()
-    if err != nil {
-        log.Fatal("Gagal ping database:", err)
-    }
+	clientOptions := options.Client().ApplyURI(connURI)
+	client, err := mongo.Connect(ctx, clientOptions)
+	if err != nil {
+		log.Fatalf("Gagal membuat klien MongoDB: %v", err)
+	}
 
-    return db
+	if err := client.Ping(ctx, nil); err != nil {
+		log.Fatalf("Gagal ping database MongoDB: %v", err)
+	}
+
+	log.Println("Koneksi ke MongoDB berhasil!")
+	return client
 }
 
 func LoggerMiddleware(c *fiber.Ctx) error {

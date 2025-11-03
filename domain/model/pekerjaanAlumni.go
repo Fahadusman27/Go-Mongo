@@ -1,21 +1,25 @@
 package model
 
-import "time"
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type PekerjaanAlumni struct {
-	ID            int       `json:"id"`
-	NimAlumni     string    `json:"nim_alumni"`
-	StatusKerja   string    `json:"status_kerja"`
-	JenisIndustri string    `json:"jenis_industri"`
-	Jabatan       string    `json:"jabatan"`
-	Pekerjaan     string    `json:"pekerjaan"`
-	Gaji          int       `json:"gaji"`
-	LamaBekerja   int       `json:"lama_bekerja"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	ID            primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	NimAlumni     string             `bson:"nim_alumni" json:"nim_alumni"`
+	StatusKerja   string             `bson:"status_kerja" json:"status_kerja"`
+	JenisIndustri string             `bson:"jenis_industri" json:"jenis_industri"`
+	Jabatan       string             `bson:"jabatan" json:"jabatan"`
+	Pekerjaan     string             `bson:"pekerjaan" json:"pekerjaan"`
+	Gaji          int                `bson:"gaji" json:"gaji"`
+	LamaBekerja   int                `bson:"lama_bekerja" json:"lama_bekerja"`
+	CreatedAt     time.Time          `bson:"created_at" json:"created_at"`
+	UpdatedAt     time.Time          `bson:"updated_at" json:"updated_at"`
 }
 
 type Trash struct {
-	PekerjaanAlumni
-	IsDeleted   time.Time `json:"is_deleted"`
+	PekerjaanAlumni `bson:",inline"`
+	IsDeleted       time.Time `bson:"is_deleted" json:"is_deleted"`
 }

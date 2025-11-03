@@ -1,7 +1,7 @@
 package service
 
 import (
-	"database/sql"
+	"errors"
 	"fmt"
 	"strconv"
 	"tugas/domain/config"
@@ -9,6 +9,9 @@ import (
 	. "tugas/domain/repository"
 
 	"github.com/gofiber/fiber/v2"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func CheckpekerjaanAlumniService(c *fiber.Ctx) error {
@@ -22,11 +25,17 @@ func CheckpekerjaanAlumniService(c *fiber.Ctx) error {
 
 	pekerjaan, err := CheckpekerjaanAlumniByID(id)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			return c.Status(fiber.StatusOK).JSON(fiber.Map{
 				"message": "Data pekerjaan alumni tidak ditemukan",
 				"success": true,
 				"exists":  false,
+			})
+        }
+		if err.Error() == "invalid job ID format" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"message": "Format ID pekerjaan alumni tidak valid",
+				"success": false,
 			})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -89,8 +98,8 @@ func UpdatepekerjaanAlumniService(c *fiber.Ctx) error {
 			"success": false,
 		})
 	}
-
-	if pekerjaan.ID == 10 || pekerjaan.StatusKerja == "" {
+	
+	if pekerjaan.ID.IsZero() || pekerjaan.StatusKerja == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "ID dan StatusKerja wajib diisi",
 			"success": false,
@@ -128,187 +137,216 @@ func GetAllpekerjaanAlumniService(c *fiber.Ctx) error {
 }
 
 func SoftDeleteBynimService(c *fiber.Ctx) error {
-    nim := c.Params("id")
-    if nim == "" {
-        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-            "message": "NIM wajib diisi",
-            "success": false,
-        })
-    }
+	nim := c.Params("id")
+	if nim == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "NIM wajib diisi",
+			"success": false,
+		})
+	}
 
-    userRole, okRole := c.Locals("role").(string)
-    loggedInUserID, okUser := c.Locals("id").(int)
+	userRole, okRole := c.Locals("role").(string)
+	loggedInUserID, okUser := c.Locals("id").(int)
 	loggedInIDString := strconv.Itoa(loggedInUserID)
 
-    if !okRole || !okUser || userRole == "" || loggedInUserID == 0 {
-        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-            "message": "Data otentikasi tidak lengkap atau tidak valid",
-            "success": false,
-        })
-    }
+	if !okRole || !okUser || userRole == "" || loggedInUserID == 0 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "Data otentikasi tidak lengkap atau tidak valid",
+			"success": false,
+		})
+	}
 
-    if userRole == "admin" {
-        fmt.Println("HASIL: Akses diberikan (ADMIN)")
-    } else if userRole == "user" {
-        if loggedInIDString != nim {
-            fmt.Println("HASIL: Akses DITOLAK (NIM tidak cocok)")
-            return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-                "message": "Akses ditolak: Anda hanya dapat menghapus data Anda sendiri",
-                "success": false,
-            })
-        }
-         fmt.Println("HASIL: Akses diberikan (USER, ID/NIM cocok)")
-    } else {
-        fmt.Println("HASIL: Akses DITOLAK (Role tidak dikenal)")
-        return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-            "message": "Akses ditolak: Role tidak diizinkan",
-            "success": false,
-        })
-    }
+	if userRole == "admin" {
+		fmt.Println("HASIL: Akses diberikan (ADMIN)")
+	} else if userRole == "user" {
+		if loggedInIDString != nim {
+			fmt.Println("HASIL: Akses DITOLAK (NIM tidak cocok)")
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"message": "Akses ditolak: Anda hanya dapat menghapus data Anda sendiri",
+				"success": false,
+			})
+		}
+		fmt.Println("HASIL: Akses diberikan (USER, ID/NIM cocok)")
+	} else {
+		fmt.Println("HASIL: Akses DITOLAK (Role tidak dikenal)")
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"message": "Akses ditolak: Role tidak diizinkan",
+			"success": false,
+		})
+	}
 
-    if err := SoftDeleteBynim(nim); err != nil {
-        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-            "message": "Gagal menghapus pekerjaan alumni karena " + err.Error(),
-            "success": false,
-        })
-    }
+	if err := SoftDeleteBynim(nim); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Gagal menghapus pekerjaan alumni karena " + err.Error(),
+			"success": false,
+		})
+	}
 
-    return c.Status(fiber.StatusOK).JSON(fiber.Map{
-        "message": "Berhasil menghapus data pekerjaan alumni",
-        "success": true,
-    })
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Berhasil menghapus data pekerjaan alumni",
+		"success": true,
+	})
 }
 
 func GetAllTrashService(c *fiber.Ctx) error {
-    userID, ok := c.Locals("id").(int)
+	userID, ok := c.Locals("id").(int)
 	if !ok || userID == 0 {
-        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-            "error": "user ID tidak ditemukan di token",
-        })
-    }
-	
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "user ID tidak ditemukan di token",
+		})
+	}
+
 	role, _ := c.Locals("role").(string)
 
 	var nimAlumni string
-    if role != "admin" {
-        row := config.DB.QueryRow("SELECT nim FROM alumni WHERE user_id = $1", userID)
-        if err := row.Scan(&nimAlumni); err != nil {
-            return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-                "error": "data alumni tidak ditemukan untuk user ini",
-            })
-        }
-    }
 
-    trashes, err := GetAllTrash(nimAlumni)
-    if err != nil {
-        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-            "error": err.Error(),
-        })
-    }
+	if role != "admin" {
+		
+		ctx := c.Context()
+		
+		alumniCollection := config.DB.Database("mahasiswa").Collection("alumni")
+		userIDStr, okStr := c.Locals("id").(string)
+		if !okStr {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "Format user ID di token tidak valid (bukan string/ObjectID)",
+			})
+		}
+		
+		objID, err := primitive.ObjectIDFromHex(userIDStr)
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "User ID di token bukan ObjectID yang valid",
+			})
+		}
 
-    return c.JSON(trashes)
+		var alumni model.Alumni
+		filter := bson.M{"user_id": objID}
+		
+		err = alumniCollection.FindOne(ctx, filter).Decode(&alumni)
+		
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "data alumni tidak ditemukan untuk user ini",
+			})
+		} else if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Gagal mencari data alumni: " + err.Error(),
+			})
+		}
+		
+		nimAlumni = alumni.NIM 
+	}
+	
+	trashes, err := GetAllTrash(nimAlumni)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(trashes)
 }
 
 func RestoreBynimService(c *fiber.Ctx) error {
-    nim := c.Params("id")
-    if nim == "" {
-        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-            "message": "NIM wajib diisi",
-            "success": false,
-        })
-    }
+	nim := c.Params("id")
+	if nim == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "NIM wajib diisi",
+			"success": false,
+		})
+	}
 
-    userRole, okRole := c.Locals("role").(string)
-    loggedInUserID, okUser := c.Locals("id").(int)
+	userRole, okRole := c.Locals("role").(string)
+	loggedInUserID, okUser := c.Locals("id").(int)
 	loggedInIDString := strconv.Itoa(loggedInUserID)
 
-    if !okRole || !okUser || userRole == "" || loggedInUserID == 0 {
-        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-            "message": "Data otentikasi tidak lengkap atau tidak valid",
-            "success": false,
-        })
-    }
+	if !okRole || !okUser || userRole == "" || loggedInUserID == 0 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "Data otentikasi tidak lengkap atau tidak valid",
+			"success": false,
+		})
+	}
 
-    if userRole == "admin" {
-        fmt.Println("HASIL: Akses diberikan (ADMIN)")
-    } else if userRole == "user" {
-        if loggedInIDString != nim {
-            fmt.Println("HASIL: Akses DITOLAK (NIM tidak cocok)")
-            return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-                "message": "Akses ditolak: Anda hanya dapat mengembalikan data Anda sendiri",
-                "success": false,
-            })
-        }
-         fmt.Println("HASIL: Akses diberikan (USER, ID/NIM cocok)")
-    } else {
-        fmt.Println("HASIL: Akses DITOLAK (Role tidak dikenal)")
-        return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-            "message": "Akses ditolak: Role tidak diizinkan",
-            "success": false,
-        })
-    }
+	if userRole == "admin" {
+		fmt.Println("HASIL: Akses diberikan (ADMIN)")
+	} else if userRole == "user" {
+		if loggedInIDString != nim {
+			fmt.Println("HASIL: Akses DITOLAK (NIM tidak cocok)")
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"message": "Akses ditolak: Anda hanya dapat mengembalikan data Anda sendiri",
+				"success": false,
+			})
+		}
+		fmt.Println("HASIL: Akses diberikan (USER, ID/NIM cocok)")
+	} else {
+		fmt.Println("HASIL: Akses DITOLAK (Role tidak dikenal)")
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"message": "Akses ditolak: Role tidak diizinkan",
+			"success": false,
+		})
+	}
 
-    if err := RestoreTrashBynim(nim); err != nil {
-        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-            "message": "Gagal mengembalikan pekerjaan alumni karena " + err.Error(),
-            "success": false,
-        })
-    }
+	if err := RestoreTrashBynim(nim); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Gagal mengembalikan pekerjaan alumni karena " + err.Error(),
+			"success": false,
+		})
+	}
 
-    return c.Status(fiber.StatusOK).JSON(fiber.Map{
-        "message": "Berhasil mengembalikan data pekerjaan alumni",
-        "success": true,
-    })
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Berhasil mengembalikan data pekerjaan alumni",
+		"success": true,
+	})
 }
 
 func DeletePekerjaanAlumniService(c *fiber.Ctx) error {
-    nim := c.Params("id")
-    if nim == "" {
-        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-            "message": "NIM wajib diisi",
-            "success": false,
-        })
-    }
+	nim := c.Params("id")
+	if nim == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "NIM wajib diisi",
+			"success": false,
+		})
+	}
 
-    userRole, okRole := c.Locals("role").(string)
-    loggedInUserID, okUser := c.Locals("id").(int)
+	userRole, okRole := c.Locals("role").(string)
+	loggedInUserID, okUser := c.Locals("id").(int)
 	loggedInIDString := strconv.Itoa(loggedInUserID)
 
-    if !okRole || !okUser || userRole == "" || loggedInUserID == 0 {
-        return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-            "message": "Data otentikasi tidak lengkap atau tidak valid",
-            "success": false,
-        })
-    }
+	if !okRole || !okUser || userRole == "" || loggedInUserID == 0 {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "Data otentikasi tidak lengkap atau tidak valid",
+			"success": false,
+		})
+	}
 
-    if userRole == "admin" {
-        fmt.Println("HASIL: Akses diberikan (ADMIN)")
-    } else if userRole == "user" {
-        if loggedInIDString != nim {
-            fmt.Println("HASIL: Akses DITOLAK (NIM tidak cocok)")
-            return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-                "message": "Akses ditolak: Anda hanya dapat menghapus data Anda sendiri",
-                "success": false,
-            })
-        }
-         fmt.Println("HASIL: Akses diberikan (USER, ID/NIM cocok)")
-    } else {
-        fmt.Println("HASIL: Akses DITOLAK (Role tidak dikenal)")
-        return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-            "message": "Akses ditolak: Role tidak diizinkan",
-            "success": false,
-        })
-    }
+	if userRole == "admin" {
+		fmt.Println("HASIL: Akses diberikan (ADMIN)")
+	} else if userRole == "user" {
+		if loggedInIDString != nim {
+			fmt.Println("HASIL: Akses DITOLAK (NIM tidak cocok)")
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"message": "Akses ditolak: Anda hanya dapat menghapus data Anda sendiri",
+				"success": false,
+			})
+		}
+		fmt.Println("HASIL: Akses diberikan (USER, ID/NIM cocok)")
+	} else {
+		fmt.Println("HASIL: Akses DITOLAK (Role tidak dikenal)")
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"message": "Akses ditolak: Role tidak diizinkan",
+			"success": false,
+		})
+	}
 
-    if err := DeletePekerjaanByid(nim); err != nil {
-        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-            "message": "Gagal menghapus pekerjaan alumni karena " + err.Error(),
-            "success": false,
-        })
-    }
+	if err := DeletePekerjaanByid(nim); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Gagal menghapus pekerjaan alumni karena " + err.Error(),
+			"success": false,
+		})
+	}
 
-    return c.Status(fiber.StatusOK).JSON(fiber.Map{
-        "message": "Berhasil menghapus data pekerjaan alumni",
-        "success": true,
-    })
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Berhasil menghapus data pekerjaan alumni",
+		"success": true,
+	})
 }

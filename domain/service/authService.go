@@ -40,22 +40,27 @@ func NewAuthService(userRepo model.UserRepository) AuthService {
 func (s *authService) Login(email, password string) (string, *model.Users, error) {
 	user, err := s.userRepo.FindByEmail(email)
 	if err != nil {
-		return "", nil, errors.New("email tidak ditemukan")
+		return "", nil, errors.New("gagal mencari email") 
+	}
+
+	if user == nil {
+		return "", nil, errors.New("email atau password salah")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		return "", nil, errors.New("password salah")
+		return "", nil, errors.New("email atau password salah")
 	}
+	
+	userIDHex := user.ID.Hex() 
 
 	claims := jwt.RegisteredClaims{
-		Subject:   string(rune(user.ID)), // we'll also include custom claims below via MapClaims if needed
+		Subject:   userIDHex, 
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.expiry)),
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
 	}
 
-	// create token with custom claim role
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub":      user.ID,
+		"sub":      userIDHex, 
 		"role":     user.Role,
 		"username": user.Username,
 		"exp":      claims.ExpiresAt.Unix(),
@@ -64,10 +69,9 @@ func (s *authService) Login(email, password string) (string, *model.Users, error
 
 	tokenString, err := token.SignedString([]byte(s.secret))
 	if err != nil {
-		return "", nil, err
+		return "", nil, errors.New("gagal membuat token JWT")
 	}
 
-	// hide password
 	user.Password = ""
 	return tokenString, user, nil
 }
