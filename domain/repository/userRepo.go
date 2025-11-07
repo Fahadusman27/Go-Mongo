@@ -25,13 +25,13 @@ func NewUserRepository(client *mongo.Client) model.UserRepository {
 }
 
 func (r *userRepoStruct) getCollection() *mongo.Collection {
-	return r.client.Database("mahasiswa").Collection(CollectionUsers)
+	return r.client.Database("alumni_management_db").Collection(CollectionUsers)
 }
 
 func (r *userRepoStruct) FindByID(id primitive.ObjectID) (*model.Users, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	
+
 	collection := r.getCollection()
 	user := new(model.Users)
 
@@ -92,17 +92,17 @@ func (r *userRepoStruct) Create(user *model.Users) error {
 	defer cancel()
 
 	collection := r.getCollection()
-    
-    user.CreatedAt = time.Now()
+
+	user.CreatedAt = time.Now()
 
 	result, err := collection.InsertOne(ctx, user)
 	if err != nil {
 		return err
 	}
-    
-    if oid, ok := result.InsertedID.(primitive.ObjectID); ok {
-        user.ID = oid
-    }
+
+	if oid, ok := result.InsertedID.(primitive.ObjectID); ok {
+		user.ID = oid
+	}
 
 	return nil
 }
@@ -112,15 +112,15 @@ func (r *userRepoStruct) Update(user *model.Users) error {
 	defer cancel()
 
 	collection := r.getCollection()
-	
+
 	filter := bson.M{"_id": user.ID}
-	
+
 	update := bson.M{
 		"$set": bson.M{
-			"email": user.Email,
+			"email":    user.Email,
 			"username": user.Username,
 			"password": user.Password,
-			"role": user.Role,
+			"role":     user.Role,
 		},
 	}
 
@@ -175,8 +175,8 @@ func GetUsersRepo(search, sortBy, order string, limit, offset int) ([]model.User
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	collection := config.DB.Database("mahasiswa").Collection(CollectionUsers)
-	
+	collection := config.DB.Database("alumni_management_db").Collection(CollectionUsers)
+
 	filter := bson.M{}
 	if search != "" {
 		searchPattern := primitive.Regex{Pattern: search, Options: "i"}
@@ -216,7 +216,7 @@ func GetUsersRepo(search, sortBy, order string, limit, offset int) ([]model.User
 
 func CountUsersRepo(search string) (int, error) {
 
-    repo := NewUserRepository(config.DB)
-    
-    return repo.Count(search)
+	repo := NewUserRepository(config.DB)
+
+	return repo.Count(search)
 }

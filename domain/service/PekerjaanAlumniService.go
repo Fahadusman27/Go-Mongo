@@ -31,7 +31,7 @@ func CheckpekerjaanAlumniService(c *fiber.Ctx) error {
 				"success": true,
 				"exists":  false,
 			})
-        }
+		}
 		if err.Error() == "invalid job ID format" {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"message": "Format ID pekerjaan alumni tidak valid",
@@ -98,7 +98,7 @@ func UpdatepekerjaanAlumniService(c *fiber.Ctx) error {
 			"success": false,
 		})
 	}
-	
+
 	if pekerjaan.ID.IsZero() || pekerjaan.StatusKerja == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "ID dan StatusKerja wajib diisi",
@@ -201,17 +201,17 @@ func GetAllTrashService(c *fiber.Ctx) error {
 	var nimAlumni string
 
 	if role != "admin" {
-		
+
 		ctx := c.Context()
-		
-		alumniCollection := config.DB.Database("mahasiswa").Collection("alumni")
+
+		alumniCollection := config.DB.Database("alumni_management_db").Collection("alumni")
 		userIDStr, okStr := c.Locals("id").(string)
 		if !okStr {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": "Format user ID di token tidak valid (bukan string/ObjectID)",
 			})
 		}
-		
+
 		objID, err := primitive.ObjectIDFromHex(userIDStr)
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -221,9 +221,9 @@ func GetAllTrashService(c *fiber.Ctx) error {
 
 		var alumni model.Alumni
 		filter := bson.M{"user_id": objID}
-		
+
 		err = alumniCollection.FindOne(ctx, filter).Decode(&alumni)
-		
+
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": "data alumni tidak ditemukan untuk user ini",
@@ -233,10 +233,10 @@ func GetAllTrashService(c *fiber.Ctx) error {
 				"error": "Gagal mencari data alumni: " + err.Error(),
 			})
 		}
-		
-		nimAlumni = alumni.NIM 
+
+		nimAlumni = alumni.NIM
 	}
-	
+
 	trashes, err := GetAllTrash(nimAlumni)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

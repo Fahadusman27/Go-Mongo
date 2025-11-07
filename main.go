@@ -2,13 +2,15 @@ package main
 
 import (
 	"log"
-	"tugas/domain/config"
 	. "tugas/domain/config"
 	"tugas/domain/repository"
 	"tugas/domain/routes"
 	"tugas/domain/service"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/swaggo/fiber-swagger"
+
+	_ "github.com/swaggo/fiber-swagger/example/docs"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 )
@@ -20,30 +22,33 @@ func main() {
 	
 	defer CloseDB(client) 
 
-	config.ConnectDB()
+	ConnectDB()
 
 	app := fiber.New(fiber.Config{
-		BodyLimit: 10 * 1024 * 1024, // 10MB
+		BodyLimit: 10 * 1024 * 1024,
 	})
 
-	app.Use(cors.New())
-	app.Use(logger.New())
+	api := app.Group("/api/v1")
 
-	app.Static("/uploads", "./uploads")
+	api.Get("/swagger/*", fiberSwagger.WrapHandler)
+
+	api.Use(cors.New())
+	api.Use(logger.New())
+
+	api.Static("/uploads", "./uploads")
 
 	userRepo := repository.NewUserRepository(client)
+	authService := service.NewAuthService(userRepo)
 
-	mongoDatabase := config.DB.Database("uploads_db")
+	mongoDatabase := DB.Database("alumni_management_db")
 	fileRepo := repository.NewUploadsRepository(mongoDatabase)
 	UploadsService := service.NewUploadsService(fileRepo, "./uploads")
 
-	app = routes.NewApp(client)
-	
-	routes.AuthRoutes(app, userRepo) 
-	routes.Alumni(app, &userRepo)
-	routes.PekerjaanAlumni(app, &userRepo)
-	routes.UserRoutes(app)
-	routes.SetupFileRoutes(app, UploadsService)
+	routes.SetupFileRoutes(api, UploadsService)
+	routes.AuthRoutes(api, authService) 
+	routes.Alumni(api, &userRepo)
+	routes.PekerjaanAlumni(api, &userRepo)
+	routes.UserRoutes(api)
 	
 	port := "3000"
 	log.Printf("🚀 Server running on http://localhost:%s", port)

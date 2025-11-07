@@ -16,7 +16,7 @@ import (
 const CollectionPekerjaan = "pekerjaan_alumni"
 
 func getCollectionPekerjaan() *mongo.Collection {
-	return config.DB.Database("mahasiswa").Collection(CollectionPekerjaan)
+	return config.DB.Database("alumni_management_db").Collection(CollectionPekerjaan)
 }
 
 func CheckpekerjaanAlumniByID(id string) (*model.PekerjaanAlumni, error) {

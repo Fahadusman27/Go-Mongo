@@ -10,7 +10,7 @@ import (
 )
 
 func getAlumniCollection() *mongo.Collection {
-	return DB.Database("mahasiswa").Collection("alumni")
+	return DB.Database("alumni_management_db").Collection("alumni")
 }
 
 func CheckAlumniByNim(nim string) (*model.Alumni, error) {

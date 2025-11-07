@@ -20,7 +20,7 @@ func CheckAlumniService(c *fiber.Ctx) error {
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return c.Status(fiber.StatusOK).JSON(fiber.Map{
-				"message":  "Mahasiswa bukan alumni",
+				"message":  "alumni_management_db bukan alumni",
 				"success":  true,
 				"isAlumni": false,
 			})

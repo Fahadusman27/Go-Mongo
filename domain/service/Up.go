@@ -48,6 +48,8 @@ func (s *upService) UploadFile(c *fiber.Ctx) error {
 		"image/png": true,
 		"image/jpg": true,
 		"application/pdf": true,
+		"text/html":true,
+		"text/plain": true,
 	}
 
 	contentType := fileHeader.Header.Get("Content-Type")
