@@ -1,26 +1,34 @@
 package service
 
 import (
+	"Mongo/domain/config"
+	"Mongo/domain/model"
 	"time"
-	"tugas/domain/config"
-	"tugas/domain/model"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthService interface {
 	RegisterHandler() fiber.Handler
 	LoginHandler() fiber.Handler
-	MeHandler() fiber.Handler
 }
 
 type authService struct {
 	userRepo model.UserRepository
-	// bisa tambah jwtSecret, expiry, dll
 }
 
+// HandleGetAllUsers godoc
+// @Summary Dapatkan semua Authentication
+// @Description Mengambil daftar semua Authentication dari database
+// @Accept json
+// @Produce json
+// @Tags Authentication
+// @Failure 400 {object} model.ErrorResponse
+// @Param credentials body model.Register true "Register"
+// @Success 200 {array} model.Register
+// @Router /api/register [post]
 func NewAuthService(userRepo model.UserRepository) AuthService {
 	return &authService{userRepo: userRepo}
 }
@@ -35,10 +43,7 @@ func (s *authService) RegisterHandler() fiber.Handler {
 func (s *authService) registerLogic(c *fiber.Ctx) error {
 	// 1. Parse body JSON
 	var body struct {
-		Email    string `json:"email"`
-		Username string `json:"username"`
-		Password string `json:"password"`
-		Role     string `json:"role"`
+		model.Register
 	}
 
 	if err := c.BodyParser(&body); err != nil {
@@ -95,6 +100,16 @@ func (s *authService) registerLogic(c *fiber.Ctx) error {
 	})
 }
 
+// HandleGetAllUsers godoc
+// @Summary Dapatkan semua Authentication
+// @Description Mengambil daftar semua Authentication dari database
+// @Accept json
+// @Produce json
+// @Tags Authentication
+// @Failure 400 {object} model.ErrorResponse
+// @Param credentials body model.Login true "Data Login"
+// @Success 200 {array} model.Login
+// @Router /api/login [post]
 // ---------------- HANDLER LOGIN ----------------
 func (s *authService) LoginHandler() fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -104,9 +119,9 @@ func (s *authService) LoginHandler() fiber.Handler {
 
 func (s *authService) loginLogic(c *fiber.Ctx) error {
 	var body struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+		model.Login
 	}
+
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid body"})
 	}
@@ -116,11 +131,11 @@ func (s *authService) loginLogic(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "gagal mencari user"})
 	}
 	if user == nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "email atau password salah"})
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "email salah"})
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password)); err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "email atau password salah"})
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "password salah"})
 	}
 
 	token, err := s.generateJWT(user)
@@ -152,14 +167,4 @@ func (s *authService) generateJWT(user *model.Users) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(secret))
-}
-
-func (s *authService) MeHandler() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		return s.meLogic(c)
-	}
-}
-
-func (s *authService) meLogic(c *fiber.Ctx) error {
-	return nil
 }

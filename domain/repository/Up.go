@@ -1,9 +1,9 @@
 package repository
 
 import (
+	"Mongo/domain/model"
 	"context"
 	"time"
-	"tugas/domain/model"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"

@@ -1,0 +1,538 @@
+definitions:
+  model.Alumni:
+    properties:
+      angkatan:
+        type: integer
+      created_at:
+        type: string
+      id_fakultas:
+        type: integer
+      id_prodi:
+        type: integer
+      id_sumber:
+        type: integer
+      nama:
+        type: string
+      nim:
+        type: string
+      sumber:
+        type: string
+      tahun_lulus:
+        type: integer
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  model.ErrorResponse:
+    properties:
+      code:
+        example: 500
+        type: integer
+      error:
+        example: Failed to fetch users
+        type: string
+    type: object
+  model.Login:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  model.PekerjaanAlumni:
+    properties:
+      created_at:
+        type: string
+      gaji:
+        type: integer
+      id:
+        type: string
+      jabatan:
+        type: string
+      jenis_industri:
+        type: string
+      lama_bekerja:
+        type: integer
+      nim_alumni:
+        type: string
+      pekerjaan:
+        type: string
+      status_kerja:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  model.Register:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      role:
+        type: string
+      username:
+        type: string
+    type: object
+  model.Uploads:
+    properties:
+      Uploads_name:
+        type: string
+      Uploads_path:
+        type: string
+      Uploads_size:
+        type: integer
+      Uploads_type:
+        type: string
+      id:
+        type: string
+      original_name:
+        type: string
+      uploaded_at:
+        type: string
+    type: object
+  model.Users:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      password:
+        type: string
+      role:
+        type: string
+      username:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: Dokumentasi API Mongo Project
+  title: API
+  version: "1.0"
+paths:
+  /api/Files:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil daftar semua FIles dari database
+      parameters:
+      - description: Data Files
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/model.Uploads'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Uploads'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Dapatkan semua Files
+      tags:
+      - Files
+  /api/alumni:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil daftar semua Alumni dari database
+      parameters:
+      - description: Data Alumni
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/model.Alumni'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Alumni'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Dapatkan semua Alumni
+      tags:
+      - Alumni
+    post:
+      consumes:
+      - application/json
+      description: Mengambil daftar semua Alumni dari database
+      parameters:
+      - description: Data Alumni
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/model.Alumni'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Alumni'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Dapatkan semua Alumni
+      tags:
+      - Alumni
+  /api/alumni/:nim:
+    delete:
+      consumes:
+      - application/json
+      description: Mengambil daftar semua Alumni dari database
+      parameters:
+      - description: Data Alumni
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/model.Alumni'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Alumni'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Dapatkan semua Alumni
+      tags:
+      - Alumni
+    get:
+      consumes:
+      - application/json
+      description: Mengambil daftar semua Alumni dari database
+      parameters:
+      - description: Data Alumni
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/model.Alumni'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Alumni'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Dapatkan semua Alumni
+      tags:
+      - Alumni
+    put:
+      consumes:
+      - application/json
+      description: Mengambil daftar semua Alumni dari database
+      parameters:
+      - description: Data Alumni
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/model.Alumni'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Alumni'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Dapatkan semua Alumni
+      tags:
+      - Alumni
+  /api/delete/:id:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Data Pekerjaan Alumni
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/model.PekerjaanAlumni'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.PekerjaanAlumni'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      tags:
+      - PekerjaanAlumni
+  /api/login:
+    post:
+      consumes:
+      - application/json
+      description: Mengambil daftar semua Authentication dari database
+      parameters:
+      - description: Data Login
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/model.Login'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Login'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Dapatkan semua Authentication
+      tags:
+      - Authentication
+  /api/pekerjaan:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil daftar semua Pekerjaan Alumni dari database
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.PekerjaanAlumni'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Dapatkan semua Pekerjaan Alumni
+      tags:
+      - PekerjaanAlumni
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Data Pekerjaan Alumni
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/model.PekerjaanAlumni'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.PekerjaanAlumni'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      tags:
+      - PekerjaanAlumni
+  /api/pekerjaan/:id:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.PekerjaanAlumni'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      tags:
+      - PekerjaanAlumni
+  /api/register:
+    post:
+      consumes:
+      - application/json
+      description: Mengambil daftar semua Authentication dari database
+      parameters:
+      - description: Register
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/model.Register'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Register'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Dapatkan semua Authentication
+      tags:
+      - Authentication
+  /api/restore/:id:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Data Pekerjaan Alumni
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/model.PekerjaanAlumni'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.PekerjaanAlumni'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      tags:
+      - PekerjaanAlumni
+  /api/softdeleted/:id:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Data Pekerjaan Alumni
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/model.PekerjaanAlumni'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.PekerjaanAlumni'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      tags:
+      - PekerjaanAlumni
+  /api/tarsh:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Data Pekerjaan Alumni
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/model.PekerjaanAlumni'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.PekerjaanAlumni'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      tags:
+      - PekerjaanAlumni
+  /api/users:
+    get:
+      consumes:
+      - application/json
+      description: Mengambil daftar semua users dari database
+      parameters:
+      - description: Data User
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/model.Users'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Users'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      summary: Dapatkan semua users
+      tags:
+      - Users
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

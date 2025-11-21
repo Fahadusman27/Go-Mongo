@@ -1,8 +1,9 @@
 package routes
 
 import (
-"tugas/domain/service"
-"github.com/gofiber/fiber/v2"
+	"Mongo/domain/service"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 func SetupFileRoutes(api fiber.Router, service service.UploadsService) {

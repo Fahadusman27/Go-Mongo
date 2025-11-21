@@ -1,12 +1,12 @@
 package repository
 
 import (
+	"Mongo/domain/config"
+	"Mongo/domain/model"
 	"context"
 	"errors"
 	"log"
 	"time"
-	"tugas/domain/config"
-	"tugas/domain/model"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"

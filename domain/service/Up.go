@@ -1,15 +1,16 @@
 package service
 
 import (
+	"Mongo/domain/model"
+	"Mongo/domain/repository"
 	"fmt"
 	"os"
 	"path/filepath"
-	"tugas/domain/model"
-	"tugas/domain/repository"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 )
+
 type UploadsService interface {
 	UploadFile(c *fiber.Ctx) error
 	GetAllFiles(c *fiber.Ctx) error
@@ -17,14 +18,24 @@ type UploadsService interface {
 	DeleteFile(c *fiber.Ctx) error
 }
 type upService struct {
-	repo repository.UploadsRepository
+	repo       repository.UploadsRepository
 	uploadPath string
 }
+
+// @Param credentials body model.Uploads true "Data Files"
+// @Summary Dapatkan semua Files
+// @Description Mengambil daftar semua FIles dari database
+// @Tags Files
+// @Accept json
+// @Produce json
+// @Failure 400 {object} model.ErrorResponse
+// @Success 200 {array} model.Uploads
+// @Router /api/Files [get]
 func NewUploadsService(repo repository.UploadsRepository, uploadPath string) UploadsService {
 	return &upService{
-		repo: repo,
+		repo:       repo,
 		uploadPath: uploadPath,
-}
+	}
 }
 func (s *upService) UploadFile(c *fiber.Ctx) error {
 	fileHeader, err := c.FormFile("file")
@@ -32,9 +43,9 @@ func (s *upService) UploadFile(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
 			"message": "No file uploaded",
-			"error": err.Error(),
+			"error":   err.Error(),
 		})
-}
+	}
 
 	if fileHeader.Size > 10*1024*1024 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -44,12 +55,12 @@ func (s *upService) UploadFile(c *fiber.Ctx) error {
 	}
 
 	allowedTypes := map[string]bool{
-		"image/jpeg": true,
-		"image/png": true,
-		"image/jpg": true,
+		"image/jpeg":      true,
+		"image/png":       true,
+		"image/jpg":       true,
 		"application/pdf": true,
-		"text/html":true,
-		"text/plain": true,
+		"text/html":       true,
+		"text/plain":      true,
 	}
 
 	contentType := fileHeader.Header.Get("Content-Type")
@@ -68,7 +79,7 @@ func (s *upService) UploadFile(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
 			"message": "Failed to create upload directory",
-			"error": err.Error(),
+			"error":   err.Error(),
 		})
 	}
 	// Simpan file
@@ -77,7 +88,7 @@ func (s *upService) UploadFile(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
 			"message": "Failed to open file",
-			"error": err.Error(),
+			"error":   err.Error(),
 		})
 	}
 	defer file.Close()
@@ -87,7 +98,7 @@ func (s *upService) UploadFile(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
 			"message": "Failed to save file",
-			"error": err.Error(),
+			"error":   err.Error(),
 		})
 	}
 	defer out.Close()
@@ -96,30 +107,30 @@ func (s *upService) UploadFile(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
 			"message": "Failed to write file",
-			"error": err.Error(),
+			"error":   err.Error(),
 		})
 	}
-// Simpan metadata ke database
+	// Simpan metadata ke database
 	UploadsModel := &model.Uploads{
-		UploadsName: newFileName,
+		UploadsName:  newFileName,
 		OriginalName: fileHeader.Filename,
-		UploadsPath: filePath,
-		UploadsSize: fileHeader.Size,
-		UploadsType: contentType,
+		UploadsPath:  filePath,
+		UploadsSize:  fileHeader.Size,
+		UploadsType:  contentType,
 	}
 	if err := s.repo.Create(UploadsModel); err != nil {
-// Hapus file jika gagal simpan ke database
+		// Hapus file jika gagal simpan ke database
 		os.Remove(filePath)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
 			"message": "Failed to save file metadata",
-			"error": err.Error(),
+			"error":   err.Error(),
 		})
 	}
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"success": true,
 		"message": "File uploaded successfully",
-		"data": s.toFileResponse(UploadsModel),
+		"data":    s.toFileResponse(UploadsModel),
 	})
 }
 
@@ -129,7 +140,7 @@ func (s *upService) GetAllFiles(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"success": false,
 			"message": "Failed to get files",
-			"error": err.Error(),
+			"error":   err.Error(),
 		})
 	}
 	var responses []model.UploadsResponse
@@ -139,7 +150,7 @@ func (s *upService) GetAllFiles(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"success": true,
 		"message": "Files retrieved successfully",
-		"data": responses,
+		"data":    responses,
 	})
 }
 
@@ -150,13 +161,13 @@ func (s *upService) GetFileByID(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"success": false,
 			"message": "File not found",
-			"error": err.Error(),
+			"error":   err.Error(),
 		})
 	}
 	return c.JSON(fiber.Map{
 		"success": true,
 		"message": "File retrieved successfully",
-		"data": s.toFileResponse(file),
+		"data":    s.toFileResponse(file),
 	})
 }
 
@@ -167,21 +178,21 @@ func (s *upService) DeleteFile(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"success": false,
 			"message": "File not found",
-			"error": err.Error(),
+			"error":   err.Error(),
 		})
 	}
-// Hapus file dari storage
+	// Hapus file dari storage
 	if err := os.Remove(file.UploadsPath); err != nil {
 		fmt.Println("Warning: Failed to delete file from storage:", err)
 	}
-// Hapus dari database
+	// Hapus dari database
 	if err := s.repo.Delete(id); err != nil {
-	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-		"success": false,
-		"message": "Failed to delete file",
-		"error": err.Error(),
-	})
-}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"success": false,
+			"message": "Failed to delete file",
+			"error":   err.Error(),
+		})
+	}
 	return c.JSON(fiber.Map{
 		"success": true,
 		"message": "File deleted successfully",
@@ -190,12 +201,12 @@ func (s *upService) DeleteFile(c *fiber.Ctx) error {
 
 func (s *upService) toFileResponse(file *model.Uploads) *model.UploadsResponse {
 	return &model.UploadsResponse{
-		ID: file.ID.Hex(),
-		UploadsName: file.UploadsName,
+		ID:           file.ID.Hex(),
+		UploadsName:  file.UploadsName,
 		OriginalName: file.OriginalName,
-		UploadsPath: file.UploadsPath,
-		UploadsSize: file.UploadsSize,
-		UploadsType: file.UploadsType,
-		UploadedAt: file.UploadedAt,
+		UploadsPath:  file.UploadsPath,
+		UploadsSize:  file.UploadsSize,
+		UploadsType:  file.UploadsType,
+		UploadedAt:   file.UploadedAt,
 	}
 }

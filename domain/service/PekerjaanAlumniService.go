@@ -1,12 +1,12 @@
 package service
 
 import (
+	"Mongo/domain/config"
+	"Mongo/domain/model"
+	. "Mongo/domain/repository"
 	"errors"
 	"fmt"
 	"strconv"
-	"tugas/domain/config"
-	"tugas/domain/model"
-	. "tugas/domain/repository"
 
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
@@ -14,6 +14,36 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// @Summary Dapatkan semua Pekerjaan Alumni
+// @Description Mengambil daftar semua Pekerjaan Alumni dari database
+// @Accept json
+// @Produce json
+// @Tags PekerjaanAlumni
+// @Failure 400 {object} model.ErrorResponse
+// @Success 200 {array} model.PekerjaanAlumni
+// @Router /api/pekerjaan [get]
+func GetAllpekerjaanAlumniService(c *fiber.Ctx) error {
+	pekerjaanList, err := GetAllpekerjaanAlumni()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Gagal mendapatkan daftar pekerjaan alumni karena " + err.Error(),
+			"success": false,
+		})
+	}
+	
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message":   "Berhasil mendapatkan daftar pekerjaan alumni",
+		"success":   true,
+		"pekerjaan": pekerjaanList,
+	})
+}
+
+// @Accept json
+// @Produce json
+// @Tags PekerjaanAlumni
+// @Failure 400 {object} model.ErrorResponse
+// @Success 200 {array} model.PekerjaanAlumni
+// @Router /api/pekerjaan/:id [get]
 func CheckpekerjaanAlumniService(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
@@ -52,6 +82,13 @@ func CheckpekerjaanAlumniService(c *fiber.Ctx) error {
 	})
 }
 
+// @Accept json
+// @Produce json
+// @Tags PekerjaanAlumni
+// @Failure 400 {object} model.ErrorResponse
+// @Param credentials body model.PekerjaanAlumni true "Data Pekerjaan Alumni"
+// @Success 200 {array} model.PekerjaanAlumni
+// @Router /api/pekerjaan [post]
 func CreatepekerjaanAlumniService(c *fiber.Ctx) error {
 	var pekerjaan model.PekerjaanAlumni
 	if err := c.BodyParser(&pekerjaan); err != nil {
@@ -60,21 +97,21 @@ func CreatepekerjaanAlumniService(c *fiber.Ctx) error {
 			"success": false,
 		})
 	}
-
+	
 	if pekerjaan.NimAlumni == "" || pekerjaan.StatusKerja == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "IDAlumni dan StatusKerja wajib diisi",
 			"success": false,
 		})
 	}
-
+	
 	if err := CreatepekerjaanAlumni(&pekerjaan); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Gagal membuat pekerjaan alumni karena " + err.Error(),
 			"success": false,
 		})
 	}
-
+	
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"message":   "Berhasil membuat data pekerjaan alumni",
 		"success":   true,
@@ -120,22 +157,13 @@ func UpdatepekerjaanAlumniService(c *fiber.Ctx) error {
 	})
 }
 
-func GetAllpekerjaanAlumniService(c *fiber.Ctx) error {
-	pekerjaanList, err := GetAllpekerjaanAlumni()
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Gagal mendapatkan daftar pekerjaan alumni karena " + err.Error(),
-			"success": false,
-		})
-	}
-
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message":   "Berhasil mendapatkan daftar pekerjaan alumni",
-		"success":   true,
-		"pekerjaan": pekerjaanList,
-	})
-}
-
+// @Accept json
+// @Produce json
+// @Tags PekerjaanAlumni
+// @Failure 400 {object} model.ErrorResponse
+// @Param credentials body model.PekerjaanAlumni true "Data Pekerjaan Alumni"
+// @Success 200 {array} model.PekerjaanAlumni
+// @Router /api/softdeleted/:id [put]
 func SoftDeleteBynimService(c *fiber.Ctx) error {
 	nim := c.Params("id")
 	if nim == "" {
@@ -188,6 +216,13 @@ func SoftDeleteBynimService(c *fiber.Ctx) error {
 	})
 }
 
+// @Accept json
+// @Produce json
+// @Tags PekerjaanAlumni
+// @Param credentials body model.PekerjaanAlumni true "Data Pekerjaan Alumni"
+// @Failure 400 {object} model.ErrorResponse
+// @Success 200 {array} model.PekerjaanAlumni
+// @Router /api/tarsh [get]
 func GetAllTrashService(c *fiber.Ctx) error {
 	userID, ok := c.Locals("id").(int)
 	if !ok || userID == 0 {
@@ -247,6 +282,13 @@ func GetAllTrashService(c *fiber.Ctx) error {
 	return c.JSON(trashes)
 }
 
+// @Accept json
+// @Produce json
+// @Tags PekerjaanAlumni
+// @Param credentials body model.PekerjaanAlumni true "Data Pekerjaan Alumni"
+// @Failure 400 {object} model.ErrorResponse
+// @Success 200 {array} model.PekerjaanAlumni
+// @Router /api/restore/:id [put]
 func RestoreBynimService(c *fiber.Ctx) error {
 	nim := c.Params("id")
 	if nim == "" {
@@ -299,6 +341,13 @@ func RestoreBynimService(c *fiber.Ctx) error {
 	})
 }
 
+// @Accept json
+// @Produce json
+// @Tags PekerjaanAlumni
+// @Param credentials body model.PekerjaanAlumni true "Data Pekerjaan Alumni"
+// @Failure 400 {object} model.ErrorResponse
+// @Success 200 {array} model.PekerjaanAlumni
+// @Router /api/delete/:id [delete]
 func DeletePekerjaanAlumniService(c *fiber.Ctx) error {
 	nim := c.Params("id")
 	if nim == "" {

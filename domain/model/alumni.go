@@ -19,3 +19,11 @@ type Alumni struct {
 	CreatedAt  time.Time          `bson:"created_at" json:"created_at"`
 	UpdatedAt  time.Time          `bson:"updated_at" json:"updated_at"`
 }
+
+type AlumniRepository interface {
+	CheckAlumniByNim(nim string) (*Alumni, error)
+	CreateAlumni(alumni *Alumni) error
+	UpdateAlumni(nim string, alumni *Alumni) error
+	DeleteAlumni(nim string) error
+	GetAllAlumni() ([]Alumni, error)
+}

@@ -1,10 +1,10 @@
 package repository
 
 import (
+	"Mongo/domain/config"
+	"Mongo/domain/model"
 	"context"
 	"errors"
-	"tugas/domain/config"
-	"tugas/domain/model"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -46,17 +46,17 @@ func CreatepekerjaanAlumni(pekerjaan *model.PekerjaanAlumni) error {
 
 	pekerjaan.CreatedAt = time.Now()
 	pekerjaan.UpdatedAt = time.Now()
-	
+
 	result, err := collection.InsertOne(ctx, pekerjaan)
 	if err != nil {
 		return err
 	}
 
-    if oid, ok := result.InsertedID.(primitive.ObjectID); ok {
-        pekerjaan.ID = oid
-    } else {
-        return errors.New("failed to get inserted ID")
-    }
+	if oid, ok := result.InsertedID.(primitive.ObjectID); ok {
+		pekerjaan.ID = oid
+	} else {
+		return errors.New("failed to get inserted ID")
+	}
 
 	return nil
 }
@@ -70,17 +70,17 @@ func UpdatepekerjaanAlumni(NimAlumni string, pekerjaan *model.PekerjaanAlumni) e
 
 	update := bson.M{
 		"$set": bson.M{
-			"status_kerja": pekerjaan.StatusKerja,
+			"status_kerja":   pekerjaan.StatusKerja,
 			"jenis_industri": pekerjaan.JenisIndustri,
-			"pekerjaan": pekerjaan.Pekerjaan,
-			"jabatan": pekerjaan.Jabatan,
-			"gaji": pekerjaan.Gaji,
-			"lama_bekerja": pekerjaan.LamaBekerja,
-			"updated_at": time.Now(),
+			"pekerjaan":      pekerjaan.Pekerjaan,
+			"jabatan":        pekerjaan.Jabatan,
+			"gaji":           pekerjaan.Gaji,
+			"lama_bekerja":   pekerjaan.LamaBekerja,
+			"updated_at":     time.Now(),
 		},
 	}
-    
-    opts := options.Update().SetUpsert(false) 
+
+	opts := options.Update().SetUpsert(false)
 
 	result, err := collection.UpdateOne(ctx, filter, update, opts)
 	if err != nil {
@@ -99,8 +99,8 @@ func GetAllpekerjaanAlumni() ([]model.PekerjaanAlumni, error) {
 	defer cancel()
 	collection := getCollectionPekerjaan()
 
-    filter := bson.M{"is_deleted": bson.M{"$exists": false}}
-	
+	filter := bson.M{"is_deleted": bson.M{"$exists": false}}
+
 	cursor, err := collection.Find(ctx, filter)
 	if err != nil {
 		return nil, err
@@ -120,21 +120,20 @@ func SoftDeleteBynim(NimAlumni string) error {
 	collection := getCollectionPekerjaan()
 
 	filter := bson.M{"nim_alumni": NimAlumni, "is_deleted": bson.M{"$exists": false}}
-	
+
 	update := bson.M{"$set": bson.M{"is_deleted": time.Now()}}
 
 	result, err := collection.UpdateMany(ctx, filter, update)
 	if err != nil {
 		return err
 	}
-	
+
 	if result.ModifiedCount == 0 {
-        return errors.New("no active job record found for the given nim")
-    }
-	
+		return errors.New("no active job record found for the given nim")
+	}
+
 	return nil
 }
-
 
 func GetAllTrash(nimAlumni string) ([]*model.Trash, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -157,7 +156,7 @@ func GetAllTrash(nimAlumni string) ([]*model.Trash, error) {
 	if err = cursor.All(ctx, &trashes); err != nil {
 		return nil, err
 	}
-	
+
 	return trashes, nil
 }
 
@@ -167,7 +166,7 @@ func RestoreTrashBynim(NimAlumni string) error {
 	collection := getCollectionPekerjaan()
 
 	filter := bson.M{"nim_alumni": NimAlumni, "is_deleted": bson.M{"$exists": true}}
-	
+
 	update := bson.M{"$unset": bson.M{"is_deleted": ""}}
 
 	result, err := collection.UpdateMany(ctx, filter, update)
@@ -176,8 +175,8 @@ func RestoreTrashBynim(NimAlumni string) error {
 	}
 
 	if result.ModifiedCount == 0 {
-        return errors.New("no deleted job record found for the given nim")
-    }
+		return errors.New("no deleted job record found for the given nim")
+	}
 
 	return nil
 }

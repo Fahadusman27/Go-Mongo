@@ -1,9 +1,9 @@
 package repository
 
 import (
+	. "Mongo/domain/config"
+	"Mongo/domain/model"
 	"context"
-	. "tugas/domain/config"
-	"tugas/domain/model"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"

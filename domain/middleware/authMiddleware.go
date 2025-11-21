@@ -3,9 +3,9 @@ package middleware
 import (
 	"strings"
 
-	"tugas/domain/config"
-	"tugas/domain/model"
-	
+	"Mongo/domain/config"
+	"Mongo/domain/model"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -27,7 +27,7 @@ func JWTAuth(userRepo *model.UserRepository) fiber.Handler {
 
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 
-			return []byte(config.GetJWTSecret()), nil 
+			return []byte(config.GetJWTSecret()), nil
 		})
 		if err != nil || !token.Valid {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "invalid token"})

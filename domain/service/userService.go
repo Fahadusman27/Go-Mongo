@@ -1,15 +1,24 @@
 package service
 
 import (
+	"Mongo/domain/model"
+	"Mongo/domain/repository"
 	"fmt"
 	"strconv"
 	"strings"
-	"tugas/domain/model"
-	"tugas/domain/repository"
 
 	"github.com/gofiber/fiber/v2"
 )
 
+// @Param credentials body model.Users true "Data User"
+// @Summary Dapatkan semua users
+// @Description Mengambil daftar semua users dari database
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Failure 400 {object} model.ErrorResponse
+// @Success 200 {array} model.Users
+// @Router /api/users [get]
 func GetUsersService(c *fiber.Ctx) error {
 	page, _ := strconv.Atoi(c.Query("page", "1"))
 	limit, _ := strconv.Atoi(c.Query("limit", "10"))
@@ -53,3 +62,4 @@ func GetUsersService(c *fiber.Ctx) error {
 	}
 	return c.JSON(response)
 }
+

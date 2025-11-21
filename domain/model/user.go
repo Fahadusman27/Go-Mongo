@@ -15,6 +15,23 @@ type Users struct {
 	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
 }
 
+type Login struct {
+	Email    string `bson:"email" json:"email"`
+	Password string `bson:"password" json:"password"`
+}
+
+type Register struct {
+	Email    string `json:"email"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Role     string `json:"role"`
+}
+
+type ErrorResponse struct {
+	Code  int    `json:"code" example:"500"`
+	Error string `json:"error" example:"Failed to fetch users"`
+}
+
 type UserRepository interface {
 	FindByID(id primitive.ObjectID) (*Users, error)
 	FindByEmail(email string) (*Users, error)
@@ -24,3 +41,4 @@ type UserRepository interface {
 	Delete(id primitive.ObjectID) error
 	Count(search string) (int, error)
 }
+
